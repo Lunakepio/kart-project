@@ -32,7 +32,7 @@ function App() {
         <color attach="background" args={['#1E1E1E']}/>
         <fog attach="fog" args={["#1E1E1E", 50, 100]} />
         <Suspense fallback={null}>
-          <Physics>
+          <Physics timeStep={"vary"}>
             <Experience />
           </Physics>
         </Suspense>

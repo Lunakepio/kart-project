@@ -20,8 +20,8 @@ export function Antenna(props) {
     nodes.Bone.traverse((bone) => {
       if (bone.isBone && bone !== nodes.Bone && bone !== nodes.Bone004) {
         const wiggleBone = new WiggleBone(bone, {
-          damping: 15,
-          stiffness: 2000,
+          damping: 28,
+          stiffness: 1700,
         });
         wiggleBones.current.push(wiggleBone);
       }

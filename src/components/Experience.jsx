@@ -2,6 +2,7 @@ import { Environment } from "@react-three/drei";
 import { Ground } from "./Ground";
 import { PlayerController } from "./player/PlayerController";
 import { Bloom, EffectComposer } from "@react-three/postprocessing";
+import { OrbitControls } from "@react-three/drei";
 
 export const Experience = () => {
   return (
@@ -21,14 +22,7 @@ export const Experience = () => {
         shadow-camera-bottom={-300}
         castShadow
       />
-      {/* <EffectComposer>
-        <Bloom
-          luminanceThreshold={0}
-          luminanceSmoothing={0.0001}
-          mipmapBlur
-          intensity={1}
-        />
-      </EffectComposer> */}
+
       {/* <OrbitControls /> */}
     </>
   );
