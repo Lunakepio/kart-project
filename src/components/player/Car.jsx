@@ -18,6 +18,7 @@ export function Car({ kart }) {
   const { nodes, materials } = useGLTF(
     "./models/trackmania_sportcar_model.glb"
   );
+  const car = useRef(null);
   const FR = useRef(null);
   const FL = useRef(null);
   const RR = useRef(null);
@@ -39,27 +40,50 @@ export function Car({ kart }) {
       // FL.current.rotation.y = -kart.current.rotationSpeed * 5;
       // frontTyreRight.current.rotation.y = kart.current.rotationSpeed * 15;
       // FR.current.rotation.y = kart.current.rotationSpeed * 15;
-      if(kart.current.isBreaking){
-        rearLeftLight.current.intensity = MathUtils.lerp(rearLeftLight.current.intensity, maxLightIntensity, 0.05);
-        rearRightLight.current.intensity = MathUtils.lerp(rearRightLight.current.intensity, maxLightIntensity, 0.05);
+      if (kart.current.isBreaking) {
+        rearLeftLight.current.intensity = MathUtils.lerp(
+          rearLeftLight.current.intensity,
+          maxLightIntensity,
+          0.05
+        );
+        rearRightLight.current.intensity = MathUtils.lerp(
+          rearRightLight.current.intensity,
+          maxLightIntensity,
+          0.05
+        );
       } else {
-        rearLeftLight.current.intensity = MathUtils.lerp(rearLeftLight.current.intensity, 0.1, 0.05);
-        rearRightLight.current.intensity = MathUtils.lerp(rearRightLight.current.intensity, 0.1, 0.05);
-      } 
+        rearLeftLight.current.intensity = MathUtils.lerp(
+          rearLeftLight.current.intensity,
+          0.1,
+          0.05
+        );
+        rearRightLight.current.intensity = MathUtils.lerp(
+          rearRightLight.current.intensity,
+          0.1,
+          0.05
+        );
+      }
       if (kart.current.reverse) {
         rearLeftLight.current.color.g = 1;
         rearLeftLight.current.color.b = 1;
         rearRightLight.current.color.b = 1;
         rearRightLight.current.color.g = 1;
-        rearLeftLight.current.intensity = MathUtils.lerp(rearLeftLight.current.intensity, maxLightIntensity / 2, 0.05);
-        rearRightLight.current.intensity = MathUtils.lerp(rearRightLight.current.intensity, maxLightIntensity / 2, 0.05);
+        rearLeftLight.current.intensity = MathUtils.lerp(
+          rearLeftLight.current.intensity,
+          maxLightIntensity / 2,
+          0.05
+        );
+        rearRightLight.current.intensity = MathUtils.lerp(
+          rearRightLight.current.intensity,
+          maxLightIntensity / 2,
+          0.05
+        );
       } else {
         rearLeftLight.current.color.g = 0;
         rearLeftLight.current.color.b = 0;
         rearRightLight.current.color.b = 0;
         rearRightLight.current.color.g = 0;
       }
-
     }
 
     // FL.current.rotation.x += kart.current.speed
@@ -67,28 +91,42 @@ export function Car({ kart }) {
   return (
     <group dispose={null}>
       <group scale={0.2} rotation-y={Math.PI} position-y={-0.5}>
-        <mesh
-          castShadow
-          receiveShadow
-          geometry={nodes["Details_13_-_Default_0"].geometry}
-          material={materials["13_-_Default"]}
-        />
+        <group ref={car}>
+          <pointLight
+            castShadow
+            ref={rearRightLight}
+            color={0xff0000}
+            intensity={0.1}
+            position={[-1.8, 1.6, -5.5]}
+          />
+          <pointLight
+            castShadow
+            ref={rearLeftLight}
+            color={0xff0000}
+            intensity={0.1}
+            position={[1.8, 1.6, -5.5]}
+          />
+          <mesh
+            castShadow
+            receiveShadow
+            geometry={nodes["Details_13_-_Default_0"].geometry}
+            material={materials["13_-_Default"]}
+          />
 
-        <pointLight castShadow ref={rearRightLight} color={0xff0000} intensity={0.1} position={[-1.8, 1.6, -5.5]}/>
-        <pointLight castShadow ref={rearLeftLight} color={0xff0000} intensity={0.1} position={[1.8, 1.6, -5.5]}/>
-        <mesh
-          castShadow
-          receiveShadow
-          geometry={nodes["Glass_13_-_Default002_0"].geometry}
-          material={materials["13_-_Default.002"]}
-        />
-        <mesh
-          castShadow
-          receiveShadow
-          geometry={nodes.Skin_skin_0.geometry}
-          material={materials.skin}
-        />
-        <group >
+          <mesh
+            castShadow
+            receiveShadow
+            geometry={nodes["Glass_13_-_Default002_0"].geometry}
+            material={materials["13_-_Default.002"]}
+          />
+          <mesh
+            castShadow
+            receiveShadow
+            geometry={nodes.Skin_skin_0.geometry}
+            material={materials.skin}
+          />
+        </group>
+        <group>
           <mesh
             castShadow
             receiveShadow

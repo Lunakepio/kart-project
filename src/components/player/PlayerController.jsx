@@ -1,10 +1,9 @@
 /* eslint-disable react/no-unknown-property */
-import { PerspectiveCamera, useKeyboardControls } from "@react-three/drei";
+import { useKeyboardControls } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import { RigidBody, BallCollider, vec3 } from "@react-three/rapier";
 import { useRef } from "react";
 import { Vector3, MathUtils } from "three";
-import { Antenna } from "../models/Antenna";
 import { Car } from "./Car";
 
 export const PlayerController = () => {
@@ -15,30 +14,23 @@ export const PlayerController = () => {
   const kart = useRef();
   const [, get] = useKeyboardControls();
   const isOnFloor = useRef(true);
-  const jumpIsHeld = useRef(false);
-  const driftDirection = useRef(undefined);
 
   const kartSettings = {
-    maxRotationSpeed: 0.015,
-    maxSpeed: 30,
+    maxRotationSpeed: 0.02,
+    maxSpeed: 45,
     jumpForce: 1,
-    accelerationFactor: 0.005,
-    deccelerationFactor : 0.002
+    accelerationFactor: 0.002,
+    deccelerationFactor: 0.002
   };
 
   const speed = useRef(0);
   const rotationSpeed = useRef(0);
 
-  const driftForce = 0.025;
-  useFrame(({ camera }) => {
-    const { accelerate, brake, left, right, jump } = get();
-    const driftStrength =
-      driftDirection.current === "left"
-        ? -0.2
-        : driftDirection.current === "right"
-        ? 0.2
-        : 0;
-    const kartRotation = character.current.rotation.y + driftStrength;
+
+  
+  useFrame(({ camera }, delta) => {
+    const { accelerate, brake, left, right, reset } = get();
+    const kartRotation = character.current.rotation.y
     const rbPosition = vec3(rb.current.translation());
     const forwardDirection = new Vector3(
       -Math.sin(kartRotation),
@@ -46,78 +38,49 @@ export const PlayerController = () => {
       -Math.cos(kartRotation)
     );
     
+    const deltaAdjusted = delta * 144;
+
     if (accelerate) {
       speed.current = MathUtils.lerp(
         speed.current,
         kartSettings.maxSpeed,
-        kartSettings.accelerationFactor
+        kartSettings.accelerationFactor * deltaAdjusted
       );
     }
     if (!accelerate && !brake) {
-      speed.current = MathUtils.lerp(speed.current, 0, kartSettings.deccelerationFactor);
+      speed.current = MathUtils.lerp(speed.current, 0, kartSettings.deccelerationFactor * deltaAdjusted);
     }
     if (brake) {
       kart.current.isBreaking = true;
       speed.current = MathUtils.lerp(
         speed.current,
         0,
-        kartSettings.accelerationFactor * 4
+        kartSettings.accelerationFactor * 3 * deltaAdjusted
       );
-      if (speed.current < 0.1) {
+      if (speed.current < 1) {
         speed.current = MathUtils.lerp(
           speed.current,
           -kartSettings.maxSpeed * 2,
-          kartSettings.accelerationFactor
+          kartSettings.accelerationFactor * deltaAdjusted
         );
         kart.current.reverse = true;
+        cameraPosition.current.position.z = -5;
+        cameraLookAtPosition.current.position.z = 10;
       }
     } else {
       kart.current.isBreaking = false;
       kart.current.reverse = false;
+      cameraPosition.current.position.z = 4;
+      cameraLookAtPosition.current.position.z = -10;
     }
     if((speed.current > 1 || speed.current < -1) && (left || right)){
-      rotationSpeed.current = MathUtils.lerp(rotationSpeed.current, left ? kartSettings.maxRotationSpeed : right ? -kartSettings.maxRotationSpeed : 0, 0.01);
+      rotationSpeed.current = MathUtils.lerp(rotationSpeed.current, left ? kartSettings.maxRotationSpeed : right ? -kartSettings.maxRotationSpeed : 0, 0.01 * deltaAdjusted);
     }
     if ((!left && !right) || !accelerate) {
-      rotationSpeed.current = MathUtils.lerp(rotationSpeed.current, 0, 0.01);
+      rotationSpeed.current = MathUtils.lerp(rotationSpeed.current, 0, 0.01 * deltaAdjusted);
     }
-      character.current.rotation.y += rotationSpeed.current;
+      character.current.rotation.y += rotationSpeed.current * deltaAdjusted;
       kart.current.rotation.y = rotationSpeed.current * 15;
-      
-    if (jump && !jumpIsHeld.current) {
-      rb.current.applyImpulse({ x: 0, y: kartSettings.jumpForce, z: 0 }, true);
-      isOnFloor.current = false;
-      jumpIsHeld.current = true;
-      if (left) {
-        driftDirection.current = "left";
-      }
-      if (right) {
-        driftDirection.current = "right";
-      }
-    }
-    if (!jump && isOnFloor.current) {
-      jumpIsHeld.current = false;
-      driftDirection.current = undefined;
-    }
-    if (driftDirection.current === "left") {
-      character.current.rotation.y += driftForce;
-      // kart.current.rotation.y = MathUtils.lerp(
-      //   kart.current.rotation.y,
-      //   0.5 + (left ? 0.2 : right ? -0.2 : 0),
-      //   0.1
-      // );
-    }
-    if (driftDirection.current === "right") {
-      character.current.rotation.y -= driftForce;
-      // kart.current.rotation.y = MathUtils.lerp(
-      //   kart.current.rotation.y,
-      //   -0.5 + (right ? -0.2 : left ? 0.2 : 0),
-      //   0.1
-      // );
-    }
-    if (driftDirection.current === undefined) {
-      kart.current.rotation.y = MathUtils.lerp(kart.current.rotation.y, 0, 0.1);
-    }
 
     rb.current.setLinvel({
       x: forwardDirection.x * speed.current,
@@ -130,34 +93,39 @@ export const PlayerController = () => {
     kart.current.rotationSpeed = rotationSpeed.current;
     camera.position.lerp(
       cameraPosition.current.getWorldPosition(new Vector3()),
-      0.1
+      0.1 * deltaAdjusted
     );
     camera.lookAt(cameraLookAtPosition.current.getWorldPosition(new Vector3()));
-    // camera.updateMatrixWorld();
-    // camera.updateProjectionMatrix();
+    if(reset){
+      character.current.position.set(6, 15, 0);
+      rb.current.setLinvel({ x: 0, y: 0, z: 0 });
+      rb.current.setAngvel({ x: 0, y: 0, z: 0 });
+      rb.current.setTranslation({ x: 6, y: 5, z: 0 });
+      rb.current.setRotation({ x: 0, y: 0, z: 0 })
+      character.current.rotation.y = 0;
+      kart.current.rotation.y = 0;
+      speed.current = 0;
+      rotationSpeed.current = 0;  
+      
+    }
   });
 
   return (
     <>
-      <RigidBody colliders={false} ref={rb} canSleep={false} ccd>
+      <RigidBody position={[6, 15, 0]} colliders={false} ref={rb} canSleep={false} ccd>
         <BallCollider
           args={[0.5]}
           onCollisionEnter={() => {
             isOnFloor.current = true;
           }}
         />
-
       </RigidBody>
       <group ref={character}>
         <mesh ref={cameraLookAtPosition} position={[0, 0, -10]}></mesh>
-
         <group ref={kart}>
           <Car kart={kart}/>
-          {/* <Antenna scale={0.1} position={[0.4, 0.2, 0.5]} /> */}
         </group>
-        
-        <mesh position={[0, 1, 5]} ref={cameraPosition}></mesh>
-        {/* <PerspectiveCamera makeDefault position={[0, 0.4, 5]} /> */}
+        <mesh position={[0, 1, 4]} ref={cameraPosition}></mesh>
       </group>
     </>
   );
